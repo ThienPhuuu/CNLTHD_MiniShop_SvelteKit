@@ -5,4 +5,5 @@ export type Product = {
 	price: number;
 	accent: string;
 	description: string;
+	image: string;
 };

@@ -7,3 +7,6 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Design reference (nguồn HTML thiết kế, không phải code dự án)
+/src/html/

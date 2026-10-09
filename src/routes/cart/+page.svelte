@@ -1,9 +1,98 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { cart } from '$lib/cart.svelte';
-	const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price) + 'đ';
+	import { formatVND } from '$lib/format';
+
+	function checkout() {
+		if (cart.items.length === 0) return;
+		goto(resolve('/thanh-toan'));
+	}
 </script>
+
 <svelte:head><title>Giỏ hàng — mộc.</title></svelte:head>
-<main class="cart-page"><a class="back" href="/">← Tiếp tục mua sắm</a><h1>Giỏ hàng</h1>{#if cart.items.length === 0}<div class="empty"><p>Giỏ hàng đang trống.</p><a href="/">Xem bộ sưu tập →</a></div>{:else}<div class="cart-layout"><section>{#each cart.items as item}<article class="item"><div class="swatch" style={`background: ${item.accent}`}></div><div class="item-copy"><h2>{item.name}</h2><p>{formatPrice(item.price)}</p><div class="quantity"><button aria-label="Giảm số lượng" onclick={() => cart.decrease(item.id)}>−</button><span>{item.quantity}</span><button aria-label="Tăng số lượng" onclick={() => cart.add(item)}>+</button></div></div><button class="remove" onclick={() => cart.remove(item.id)}>Xóa</button></article>{/each}</section><aside><p>Tạm tính</p><strong>{formatPrice(cart.total)}</strong><button class="checkout">Tiến hành thanh toán <span>→</span></button><small>Thanh toán sẽ được tích hợp ở bước tiếp theo.</small></aside></div>{/if}</main>
-<style>
-	:global(body) { background: #f4f0e9; color: #252622; margin: 0; }.cart-page { margin: auto; max-width: 980px; padding: 50px 32px 100px; }.back { color: #77766e; font: .75rem Arial, sans-serif; text-decoration: none; }.cart-page h1 { font-size: clamp(3rem, 7vw, 6rem); font-weight: 400; margin: 70px 0 50px; }.empty { border-top: 1px solid #d8d0c3; padding-top: 30px; }.empty p { font: 1rem Arial, sans-serif; }.empty a { color: #c85a3f; font: .8rem Arial, sans-serif; }.cart-layout { display: grid; gap: 90px; grid-template-columns: 1.5fr 1fr; }.item { align-items: center; border-top: 1px solid #d8d0c3; display: flex; gap: 18px; padding: 20px 0; }.swatch { height: 95px; width: 95px; }.item-copy { flex: 1; }.item h2 { font-size: 1.15rem; font-weight: 400; margin: 0 0 7px; }.item p { color: #77766e; font: .75rem Arial, sans-serif; margin: 0 0 15px; }.quantity { align-items: center; border: 1px solid #d2c9bc; display: flex; font: .8rem Arial, sans-serif; width: max-content; }.quantity button { background: transparent; border: 0; cursor: pointer; padding: 7px 11px; }.quantity span { min-width: 20px; text-align: center; }.remove { background: transparent; border: 0; color: #99978f; cursor: pointer; font: .7rem Arial, sans-serif; } aside { align-self: start; border-top: 1px solid #252622; padding-top: 20px; } aside p { color: #77766e; font: .75rem Arial, sans-serif; margin: 0 0 10px; } aside strong { display: block; font-size: 2rem; font-weight: 400; }.checkout { background: #252622; border: 0; color: #fff; cursor: pointer; display: flex; font: .78rem Arial, sans-serif; justify-content: space-between; margin-top: 30px; padding: 16px; width: 100%; }.checkout span { color: #e8b397; } aside small { color: #99978f; display: block; font: .68rem/1.4 Arial, sans-serif; margin-top: 14px; } @media (max-width: 680px) { .cart-layout { grid-template-columns: 1fr; gap: 50px; } }
-</style>
+
+<div class="max-w-[980px] mx-auto px-6 lg:px-12 py-12 pb-28">
+	<a
+		href={resolve('/')}
+		class="inline-flex items-center gap-2 text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm uppercase tracking-wider transition-colors"
+	>
+		<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+		Tiếp tục mua sắm
+	</a>
+	<h1 class="font-display-lg text-display-lg text-on-surface mt-16 mb-12">Giỏ hàng</h1>
+
+	{#if cart.items.length === 0}
+		<div class="border-t border-outline-variant pt-8">
+			<p class="font-body-md text-body-md text-on-surface-variant">Giỏ hàng đang trống.</p>
+			<a
+				href={resolve('/')}
+				class="inline-block mt-3 text-primary-container hover:text-primary font-label-lg text-label-lg transition-colors"
+				>Xem bộ sưu tập →</a
+			>
+		</div>
+	{:else}
+		<div class="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-14 md:gap-24">
+			<section>
+				{#each cart.items as item (item.id)}
+					<article class="flex items-center gap-4 border-t border-outline-variant py-5">
+						<img src={item.image} alt={item.name} class="w-24 h-24 object-cover rounded shrink-0" />
+						<div class="flex-1 min-w-0">
+							<span
+								class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold"
+								>{item.category}</span
+							>
+							<h2 class="font-headline-sm text-[18px] text-on-surface mt-1">{item.name}</h2>
+							<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+								{formatVND(item.price)}
+							</p>
+							<div class="mt-3 inline-flex items-center border border-outline-variant">
+								<button
+									type="button"
+									aria-label="Giảm số lượng"
+									onclick={() => cart.decrease(item.id)}
+									class="px-3 py-1.5 hover:bg-surface-container transition-colors">−</button
+								>
+								<span class="w-8 text-center font-label-sm text-label-sm text-on-surface"
+									>{item.quantity}</span
+								>
+								<button
+									type="button"
+									aria-label="Tăng số lượng"
+									onclick={() => cart.add(item)}
+									class="px-3 py-1.5 hover:bg-surface-container transition-colors">+</button
+								>
+							</div>
+						</div>
+						<button
+							type="button"
+							aria-label="Xóa {item.name} khỏi giỏ"
+							onclick={() => cart.remove(item.id)}
+							class="text-on-surface-variant/70 hover:text-error transition-colors p-2"
+						>
+							<span class="material-symbols-outlined text-[18px]">delete</span>
+						</button>
+					</article>
+				{/each}
+			</section>
+			<aside class="self-start border-t border-on-surface pt-5">
+				<p class="font-body-sm text-body-sm text-on-surface-variant">Tạm tính</p>
+				<strong class="block font-headline-lg text-headline-lg font-normal text-on-surface mt-2"
+					>{formatVND(cart.total)}</strong
+				>
+				<p class="font-body-sm text-body-sm text-secondary mt-2">Miễn phí vận chuyển toàn quốc</p>
+				<button
+					type="button"
+					onclick={checkout}
+					class="mt-7 w-full py-4 bg-primary-container hover:bg-primary text-on-primary-container hover:text-on-primary rounded font-label-lg text-label-lg uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm"
+				>
+					<span>Tiến hành thanh toán</span>
+					<span class="material-symbols-outlined text-[18px]">lock</span>
+				</button>
+				<small class="block font-label-sm text-[11px] text-on-surface-variant/70 mt-3">
+					Bước tiếp theo: nhập thông tin giao nhận &amp; chọn hình thức thanh toán.
+				</small>
+			</aside>
+		</div>
+	{/if}
+</div>

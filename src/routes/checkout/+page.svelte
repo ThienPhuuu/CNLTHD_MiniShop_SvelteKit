@@ -98,7 +98,7 @@
 			}
 		});
 		cart.clear();
-		goto(resolve('/thanh-toan-thanh-cong'));
+		goto(resolve('/order-success'));
 	}
 
 	function handleSubmit(event: SubmitEvent) {

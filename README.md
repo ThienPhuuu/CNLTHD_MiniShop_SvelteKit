@@ -1,6 +1,6 @@
 # mộc. — SvelteKit minishop
 
-Skeleton frontend cho một web bán hàng xây bằng SvelteKit, TypeScript và Svelte 5 runes.
+Skeleton frontend cho một web bán hàng xây bằng SvelteKit, TypeScript và Svelte 5 runes (SSR mặc định).
 
 ## Chạy dự án
 
@@ -12,65 +12,25 @@ npm run dev -- --open
 Các lệnh hữu ích:
 
 ```bash
-npm run check   # kiểm tra Svelte và TypeScript
-npm run lint    # kiểm tra format và ESLint
-npm run build   # build production
+npm run check    # kiểm tra Svelte và TypeScript
+npm run lint     # kiểm tra format (Prettier) và ESLint
+npm run build    # build production
+npm run preview  # chạy bản production đã build
 ```
 
 ## Cấu trúc quan trọng
 
-- `src/routes/+page.server.ts`: route `load` lấy catalog và danh mục trước khi render trang chủ.
-- `src/lib/server/catalog.ts`: dữ liệu chỉ dùng ở phía server, là nơi phù hợp để thay bằng truy vấn database hoặc API private sau này.
-- `src/lib/cart.svelte.ts`: state giỏ hàng dùng Svelte 5 runes; các nút trên giao diện làm state thay đổi và UI tự cập nhật.
-- `src/routes/+page.svelte`: trang catalog, tìm kiếm, lọc danh mục và thêm sản phẩm.
-- `src/routes/cart/+page.svelte`: trang giỏ hàng, tăng/giảm số lượng và xem tổng tiền.
+- `src/routes/+page.server.ts` — route `load` lấy catalog và danh mục trước khi render trang chủ; trang catalog, tìm kiếm, lọc danh mục.
+- `src/routes/products/[id]/+page.server.ts` — route `load` cho trang chi tiết (nếu không tìm thấy trả `error(404)`), kèm 3 sản phẩm liên quan.
+- `src/routes/cart/+page.svelte` — trang giỏ hàng; `cart` dùng Svelte 5 runes, giỏ hàng chỉ ở client.
+- `src/routes/checkout/+page.svelte` — form thông tin giao nhận, vận chuyển, thanh toán, mã ưu đãi; khi đặt hàng thành công lưu vào `placedOrder`, xoá giỏ và điều hướng sang `/order-success`.
+- `src/routes/order-success/+page.svelte` — xác nhận đơn hàng: biên lai, timeline xưởng, thông tin nhận hàng, modal theo dõi vận chuyển.
+- `src/lib/server/catalog.ts` — dữ liệu sản phẩm **server-only** (không bundle vào client); nơi phù hợp để thay bằng database/API sau này.
+- `src/lib/cart.svelte.ts`, `src/lib/order.svelte.ts`, `src/lib/ui.svelte.ts` — state dùng chung bằng Svelte 5 runes (giỏ hàng, đơn hàng vừa đặt, toast/drawer).
+- `src/html/` — thiết kế gốc (bản tham chiếu) đã chuyển sang các route tương ứng: `home.html`, `product-detail.html`, `checkout.html`, `order-success.html`, `artisan.html`.
 
-`+page.server.ts` không được bundle vào client. Vì vậy secret, token hoặc logic truy cập database nên đặt trong module server-only và chỉ trả dữ liệu cần thiết qua `load`; không đặt chúng trong component `.svelte`.
+Yêu cầu đồ án: `requirements.md`.
 
-## Hướng phát triển tiếp theo
+## Ghi chú kỹ thuật
 
-1. Thay catalog mẫu bằng database/API riêng ở server.
-2. Thêm `actions` cho checkout hoặc form đăng nhập.
-3. Chọn adapter deploy phù hợp và thêm xác thực người dùng.
-4. Bổ sung test, persistence giỏ hàng và xử lý trạng thái loading/error.# sv
-
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
-
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv@0.17.1 create --template minimal --types ts --add prettier eslint --no-install .
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+`+page.server.ts`, `src/lib/server/*`, `$env/static/private` không được bundle vào client. Vì vậy secret, token hoặc logic truy cập database nên đặt trong module server-only và chỉ trả dữ liệu cần thiết qua `load`; không đặt chúng trong component `.svelte`.

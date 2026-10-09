@@ -6,7 +6,7 @@
 
 	function checkout() {
 		if (cart.items.length === 0) return;
-		goto(resolve('/thanh-toan'));
+		goto(resolve('/checkout'));
 	}
 </script>
 

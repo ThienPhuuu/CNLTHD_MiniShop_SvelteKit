@@ -110,7 +110,7 @@
 							>{product.category}</span
 						>
 						<a
-							href={resolve(`/san-pham/${product.id}`)}
+							href={resolve(`/products/${product.id}`)}
 							class="absolute inset-x-4 bottom-4 py-2.5 px-4 bg-surface/90 hover:bg-surface text-on-surface backdrop-blur-md rounded shadow-sm font-label-sm text-label-sm tracking-wider uppercase flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 focus:opacity-100 translate-y-2 group-hover:translate-y-0 focus:translate-y-0 transition-all duration-300"
 						>
 							<span class="material-symbols-outlined text-[18px]">visibility</span>
@@ -127,7 +127,7 @@
 							<h3
 								class="font-headline-sm text-[18px] text-on-surface group-hover:text-primary-container transition-colors mb-2"
 							>
-								<a href={resolve(`/san-pham/${product.id}`)}>{product.name}</a>
+								<a href={resolve(`/products/${product.id}`)}>{product.name}</a>
 							</h3>
 							<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mb-4">
 								{product.description}

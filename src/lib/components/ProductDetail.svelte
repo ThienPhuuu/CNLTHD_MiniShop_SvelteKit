@@ -494,7 +494,7 @@
 							<h3
 								class="font-title-lg text-title-lg text-on-surface group-hover:text-primary transition-colors"
 							>
-								<a href={resolve(`/san-pham/${item.id}`)}>{item.name}</a>
+								<a href={resolve(`/products/${item.id}`)}>{item.name}</a>
 							</h3>
 							<span class="font-label-lg text-label-lg text-primary font-semibold whitespace-nowrap"
 								>{formatVND(item.price)}</span

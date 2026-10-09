@@ -1,6 +1,4 @@
-import type { Product } from '$lib/types';
-
-export type CartItem = Product & { quantity: number };
+import type { CartItem, Product } from '$lib/types';
 
 class Cart {
 	items = $state<CartItem[]>([]);

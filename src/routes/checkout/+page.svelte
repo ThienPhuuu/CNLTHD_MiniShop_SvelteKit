@@ -1,36 +1,10 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import { cart } from '$lib/cart.svelte';
+	import { COUPON_CODE, COUPON_MIN, COUPON_VALUE, GIFT_FEE, SHIPPING_FEE } from '$lib/checkout';
 	import { formatVND } from '$lib/format';
-	import { placedOrder } from '$lib/order.svelte';
-
-	const SHIPPING_FEE: Record<string, number> = { standard: 30000, express: 55000 };
-	const GIFT_FEE = 35000;
-	const COUPON_CODE = 'MOCBANMOI';
-	const COUPON_VALUE = 50000;
-	const COUPON_MIN = 1000000;
-
-	const CITY_LABELS: Record<string, string> = {
-		HCM: 'TP. Hồ Chí Minh',
-		HN: 'Hà Nội',
-		DN: 'Đà Nẵng',
-		QN: 'Quảng Nam (Hội An)',
-		BD: 'Bình Dương'
-	};
-	const DISTRICT_LABELS: Record<string, string> = {
-		Q3: 'Quận 3',
-		Q1: 'Quận 1',
-		BT: 'Bình Thạnh',
-		PN: 'Phú Nhuận',
-		TD: 'Thành phố Thủ Đức'
-	};
-	const WARD_LABELS: Record<string, string> = {
-		P6: 'Phường Võ Thị Sáu',
-		P2: 'Phường 2',
-		P4: 'Phường 4',
-		P9: 'Phường 9'
-	};
 
 	const inputClass =
 		'w-full bg-surface-container-lowest border border-outline-variant/60 rounded px-3.5 py-2.5 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:border-on-surface transition-colors';
@@ -52,12 +26,18 @@
 	let couponApplied = $state(false);
 	let couponError = $state('');
 	let orderState = $state<'idle' | 'loading'>('idle');
+	let submitError = $state('');
 
 	let subtotal = $derived(cart.total);
 	let shippingFee = $derived(SHIPPING_FEE[shipping]);
 	let couponValid = $derived(couponApplied && subtotal >= COUPON_MIN);
 	let discount = $derived(couponValid ? COUPON_VALUE : 0);
 	let total = $derived(subtotal + shippingFee + GIFT_FEE - discount);
+
+	let cartLinesJSON = $derived(
+		JSON.stringify(cart.items.map((item) => ({ id: item.id, quantity: item.quantity })))
+	);
+	let couponAppliedFlag = $derived(couponValid ? 'true' : '');
 
 	function applyCoupon() {
 		if (couponCode.trim().toUpperCase() !== COUPON_CODE) {
@@ -74,41 +54,24 @@
 		couponApplied = true;
 	}
 
-	function placeOrder() {
-		placedOrder.place({
-			id: `MOC-${Math.floor(1000 + Math.random() * 9000)}`,
-			items: cart.items,
-			subtotal,
-			shippingFee,
-			giftFee: GIFT_FEE,
-			discount,
-			total,
-			shipping: shipping as 'standard' | 'express',
-			payment: payment as 'vietqr' | 'card' | 'cod',
-			createdAt: new Date(),
-			recipient: {
-				fullname: fullname.trim() || 'Khách mộc.',
-				phone: phone.trim(),
-				email: email.trim(),
-				cityLabel: CITY_LABELS[city] ?? city,
-				districtLabel: DISTRICT_LABELS[district] ?? district,
-				wardLabel: WARD_LABELS[ward] ?? ward,
-				address: address.trim() || 'Chưa cung cấp',
-				note: note.trim()
-			}
-		});
-		cart.clear();
-		goto(resolve('/order-success'));
-	}
-
-	function handleSubmit(event: SubmitEvent) {
-		event.preventDefault();
-		if (orderState !== 'idle') return;
+	const handleEnhance: SubmitFunction = () => {
 		orderState = 'loading';
-		setTimeout(() => {
-			placeOrder();
-		}, 900);
-	}
+		submitError = '';
+		return async ({ result, update }) => {
+			if (result.type === 'failure') {
+				orderState = 'idle';
+				submitError =
+					String((result.data as { error?: string } | undefined)?.error ?? '') ||
+					'Không thể xác nhận đơn hàng. Vui lòng thử lại.';
+			} else if (result.type === 'error') {
+				orderState = 'idle';
+				submitError = 'Mất kết nối đến xưởng. Vui lòng thử lại sau ít phút.';
+			} else if (result.type === 'redirect') {
+				cart.clear();
+				await update();
+			}
+		};
+	};
 </script>
 
 <svelte:head>
@@ -187,7 +150,16 @@
 		<div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
 			<!-- LEFT: FORM -->
 			<div class="lg:col-span-7 flex flex-col gap-10">
-				<form class="flex flex-col gap-10" id="checkout-form" onsubmit={handleSubmit}>
+				<form
+					class="flex flex-col gap-10"
+					id="checkout-form"
+					method="POST"
+					action="?/place"
+					use:enhance={handleEnhance}
+				>
+					<input type="hidden" name="items" value={cartLinesJSON} />
+					<input type="hidden" name="coupon" value={couponCode} />
+					<input type="hidden" name="coupon_applied" value={couponAppliedFlag} />
 					<!-- 01. Contact -->
 					<section
 						class="bg-surface-container-low rounded-xl p-6 sm:p-8 flex flex-col gap-6 shadow-sm"
@@ -212,6 +184,7 @@
 								<input
 									class={inputClass}
 									id="fullname"
+									name="fullname"
 									placeholder="Nguyễn Thu An"
 									required
 									type="text"
@@ -225,6 +198,7 @@
 								<input
 									class={inputClass}
 									id="phone"
+									name="phone"
 									placeholder="0901 234 567"
 									required
 									type="tel"
@@ -238,6 +212,7 @@
 								<input
 									class={inputClass}
 									id="email"
+									name="email"
 									placeholder="thuan.nguyen@email.com"
 									required
 									type="email"
@@ -267,7 +242,7 @@
 								<label class="font-label-sm text-label-sm text-on-surface font-semibold" for="city"
 									>Tỉnh / Thành phố *</label
 								>
-								<select class={selectClass} id="city" bind:value={city}>
+								<select class={selectClass} id="city" name="city" bind:value={city}>
 									<option value="HCM">TP. Hồ Chí Minh</option>
 									<option value="HN">Hà Nội</option>
 									<option value="DN">Đà Nẵng</option>
@@ -280,7 +255,7 @@
 									class="font-label-sm text-label-sm text-on-surface font-semibold"
 									for="district">Quận / Huyện *</label
 								>
-								<select class={selectClass} id="district" bind:value={district}>
+								<select class={selectClass} id="district" name="district" bind:value={district}>
 									<option value="Q3">Quận 3</option>
 									<option value="Q1">Quận 1</option>
 									<option value="BT">Bình Thạnh</option>
@@ -292,7 +267,7 @@
 								<label class="font-label-sm text-label-sm text-on-surface font-semibold" for="ward"
 									>Phường / Xã *</label
 								>
-								<select class={selectClass} id="ward" bind:value={ward}>
+								<select class={selectClass} id="ward" name="ward" bind:value={ward}>
 									<option value="P6">Phường Võ Thị Sáu</option>
 									<option value="P2">Phường 2</option>
 									<option value="P4">Phường 4</option>
@@ -307,6 +282,7 @@
 								<input
 									class={inputClass}
 									id="address"
+									name="address"
 									placeholder="Ví dụ: 48/6 Trần Quốc Thảo, Căn hộ A2-03"
 									required
 									type="text"
@@ -582,10 +558,22 @@
 						</p>
 						<textarea
 							class="{inputClass} resize-y"
+							name="note"
 							placeholder="Nhập lời chúc viết tay hoặc căn dặn đặc biệt khi giao (Ví dụ: Giao sau 17h, viết lời chúc mừng sinh nhật lên thiệp...)"
 							rows="3"
 							bind:value={note}></textarea>
 					</section>
+
+					<!-- Server validation errors -->
+					{#if submitError}
+						<div
+							class="flex items-center gap-2.5 p-3.5 rounded-lg bg-error-container/50 border border-error/20 text-error font-body-sm text-body-sm"
+							role="alert"
+						>
+							<span class="material-symbols-outlined text-[18px] shrink-0">error</span>
+							<span>{submitError}</span>
+						</div>
+					{/if}
 
 					<!-- Main CTA -->
 					<div class="flex flex-col gap-4 pt-2">
@@ -604,7 +592,7 @@
 								<span
 									class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full"
 								></span>
-								<span>Đang khởi tạo mã chuyển khoản...</span>
+								<span>Đang xác nhận đơn hàng...</span>
 							{/if}
 						</button>
 						<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">

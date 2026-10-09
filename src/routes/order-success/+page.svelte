@@ -1,16 +1,12 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import { resolve } from '$app/paths';
-	import { placedOrder } from '$lib/order.svelte';
+	import { PAYMENT_LABELS } from '$lib/checkout';
 	import { formatVND } from '$lib/format';
 
-	const order = $derived(placedOrder.order);
+	let { data } = $props();
 
-	const PAYMENT_LABELS: Record<string, string> = {
-		vietqr: 'VietQR',
-		card: 'Thẻ quốc tế',
-		cod: 'COD'
-	};
+	const order = $derived(data.order);
 
 	let trackingOpen = $state(false);
 

@@ -75,7 +75,7 @@
 					<img
 						class="w-full h-full object-cover"
 						alt="Bàn phẳng bày các vật thủ công: ly gốm mộc, khay gỗ, sổ tay giấy thô và lá bạch đàn"
-						src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzYSDxP8PNl9WB--SxaQ-LxCnnryVVXoZSk9C0gmnBB7gP1o2_xqrM0yeBYlJOXaAs4KyAcoiGQYcyCaKZcEupCjE7PeL-mAKQ1_MyR_QP3IWcFt1QEH9rN-xA6CLeqdgIv4Lf1iTQTdnr86bwPiB35-TaxsWoVb4VCbScTLP-JaiLsk27RvUrPehjqvn7SVPdSiL1IFG8smsum6BHNgpC0Bt2TbnymPYCfMbfaXS3d1d4weJBUGK1"
+						src="/src/assets/images/banner.png"
 					/>
 					<div
 						class="absolute top-6 right-6 px-3 py-1.5 rounded bg-surface/80 backdrop-blur-sm text-on-surface font-label-sm text-label-sm uppercase tracking-wider"

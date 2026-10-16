@@ -19,11 +19,17 @@ Svelte 5 dùng runes: `$state` cho state, `$derived` cho giá trị suy diễn, 
 
 `src/lib/components/Catalog.svelte:10-19` — ô tìm kiếm và bộ lọc danh mục:
 
-```svelte
-let query = $state(''); // state local let selectedCategory = $state('all'); let filteredProducts =
-$derived( // state suy diễn: chạy lại khi query/category đổi products.filter( (product) =>
-(selectedCategory === 'all' || product.categoryId === selectedCategory) && (!query.trim() ||
-product.name.toLowerCase().includes(query.trim().toLowerCase())) ) );
+```ts
+let query = $state(''); // state local
+let selectedCategory = $state('all');
+let filteredProducts = $derived(
+	// state suy diễn: chạy lại khi query/category đổi
+	products.filter(
+		(product) =>
+			(selectedCategory === 'all' || product.categoryId === selectedCategory) &&
+			(!query.trim() || product.name.toLowerCase().includes(query.trim().toLowerCase()))
+	)
+);
 ```
 
 Khi người dùng gõ chữ hoặc bấm filter, `query`/`selectedCategory` đổi → `filteredProducts` tự tính lại → vòng `{#each filteredProducts ...}` render lại. Không cần `onMount`/gọi lại data.
@@ -91,12 +97,14 @@ Hàm `load` chạy **trước khi render**, ở một nơi được SvelteKit x�
 - `+layout.server.ts` → tương tự cho layout.
 - `+page.ts` → universal load (server khi SSR, client khi SPA).
 
-**Minh chứng 1 — trang chủ.** `src/routes/+page.server.ts:4-11`:
+**Minh chứng 1 — trang chủ, `load` async gọi API DummyJSON.** `src/routes/+page.server.ts`:
 
 ```ts
-import { products } from '$lib/server/catalog';
+import { fetchProducts } from '$lib/server/catalog';
+import type { Category } from '$lib/types';
 
-export function load() {
+export async function load({ fetch }) {
+	const products = await fetchProducts(fetch);
 	const categories: Category[] = [{ id: 'all', label: 'Tất cả' }];
 	for (const product of products) {
 		if (!categories.some((category) => category.id === product.categoryId)) {
@@ -107,6 +115,37 @@ export function load() {
 }
 ```
 
+Helper gọi API — `src/lib/server/catalog.ts` (server-only, nguồn dữ liệu duy nhất của toàn app):
+
+```ts
+import { error } from '@sveltejs/kit';
+import type { Product } from '$lib/types';
+
+const CATALOG_URL = 'https://dummyjson.com/c/4d07-230f-4ad2-b021';
+
+export async function fetchProducts(fetcher: typeof globalThis.fetch): Promise<Product[]> {
+	const response = await fetcher(CATALOG_URL);
+	if (!response.ok) {
+		error(502, 'Không lấy được danh mục sản phẩm từ nguồn dữ liệu.');
+	}
+	const data: unknown = await response.json();
+	if (!Array.isArray(data)) {
+		error(502, 'Nguồn dữ liệu trả về sai định dạng.');
+	}
+	return data as Product[];
+}
+```
+
+**`fetch` của SvelteKit — chạy ở đâu, khi nào, có gọi lại không?**
+
+| Giai đoạn              | Việc gọi API xảy ra ở đâu                                                                                          | Gọi lại API không?                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| SSR (request HTTP đầu) | `load({ fetch })` chạy **trên server**, `fetch` gọi thẳng dummyjson (không qua Origin trình duyệt → không lo CORS) | Gọi 1 lần cho trang đó                                          |
+| Hydration              | Không có — dữ liệu đã serialize trong HTML/nhánh `data`                                                            | **Không gọi lại** `+page.server.ts`, tránh gọi API thừa         |
+| Điều hướng client      | SvelteKit triệu hồi lại `load` **trên server** qua endpoint `/__data.json`                                         | Có (mỗi lần vào route), nhưng chỉ server-side; client nhận JSON |
+
+Do đó `fetchProducts(fetch)` chỉ nhận `fetch` từ context `load`/action — không bao giờ chạy ở client, URL mock/API key đặt trong server module không lọt vào bundle.
+
 `src/routes/+page.svelte:6` và `:18` — dữ liệu vào page qua props:
 
 ```svelte
@@ -116,10 +155,11 @@ let {data} = $props(); ...
 
 `load` trả **dữ liệu** (object JS bình thường), SvelteKit serialize nó (kể cả `Date`) rồi đưa làm props `data` cho page + các component con.
 
-**Minh chứng 2 — route có params + xử lý 404 + dữ liệu liên quan.** `src/routes/products/[id]/+page.server.ts:4-10`:
+**Minh chứng 2 — route có params + xử lý 404 + dữ liệu liên quan.** `src/routes/products/[id]/+page.server.ts`:
 
 ```ts
-export function load({ params }) {
+export async function load({ fetch, params }) {
+	const products = await fetchProducts(fetch);
 	const product = products.find((entry) => entry.id === params.id);
 	if (!product) {
 		error(404, 'Không tìm thấy sản phẩm');
@@ -146,21 +186,23 @@ Chi tiết page chi tiết sản phẩm còn dùng `{#key data.product.id}` đ�
 
 **Module server-only và lý do.**
 
-`src/lib/server/catalog.ts` và `src/lib/server/orders.ts` nằm trong `src/lib/server/*` — quy ước của SvelteKit: module trong `$lib/server` **không được import vào client** (SvelteKit chặn khi build). Cả 2 chỉ được import bởi các `+page.server.ts`:
+`src/lib/server/catalog.ts` và `src/lib/server/orders.ts` nằm trong `src/lib/server/*` — quy ước của SvelteKit: module trong `$lib/server` **không được import vào client** (SvelteKit chặn khi build). Cả 2 chỉ được import bởi các file server:
 
-- `catalog.ts` ← import trong `src/routes/+page.server.ts`, `src/routes/products/[id]/+page.server.ts`, `src/routes/checkout/+page.server.ts`.
+- `catalog.ts` — hàm `fetchProducts(fetch)` gọi **API DummyJSON** (`https://dummyjson.com/c/4d07-230f-4ad2-b021`), chỉ nhận `fetch` của SvelteKit từ context `load`/action ← import trong `src/routes/+page.server.ts`, `src/routes/products/[id]/+page.server.ts`, `src/routes/checkout/+page.server.ts` (action `place` cũng gọi để tính lại tiền).
 - `orders.ts` (kho đơn hàng in-memory: `const orders = new Map<string, Order>()`) ← import trong `checkout/+page.server.ts` (lưu khi đặt) và `order-success/+page.server.ts` (đọc khi hiển thị).
 
-Kết quả: cách tính tiền, kho đơn hàng, dữ liệu giá… là **nguồn chân lý phía server**; client chỉ nhận dữ liệu cần hiển thị. Đây chính là nơi đặt secret/database sau này mà không lo rò rỉ sang bundle client.
+Kết quả: việc gọi API lấy sản phẩm, tính tiền, kho đơn hàng đều diễn ra **phía server**; client chỉ nhận dữ liệu đã serialize (danh sách sản phẩm, đơn hàng). Đây chính là nơi đặt secret/API key/database sau này mà không lo rò rỉ sang bundle client.
+
+**Nguồn dữ liệu duy nhất, được "chốt"**: toàn bộ app lấy sản phẩm qua đúng một hàm `fetchProducts` — không còn mảng cục bộ nào song song, nên báo cáo/code không mâu thuẫn về nguồn dữ liệu. Id sản phẩm trong collection này là **string** (`"p1"`…) khớp `Product.id: string` và `cart.remove(id: string)` — không phát sinh lỗi kiểu dữ liệu.
 
 **Kiểm tra thực tế — không dùng browser API ở tầng server.** Grep toàn repo (`window/document/localStorage/navigator`) cho kết quả chỉ xuất hiện trong `src/html/*.html` (file thiết kế tham chiếu, không vào bundle). Code app (`src/lib`, `src/routes`) không có browser API ở module top-level.
 
 **Dữ liệu nào load ở server, dữ liệu nào sinh ở browser:**
 
-| Loại dữ liệu                        | Nơi sinh                           | Bằng chứng                       |
-| ----------------------------------- | ---------------------------------- | -------------------------------- |
-| Sản phẩm, danh mục, đơn hàng        | Server (`load`/action/`orders.ts`) | ví dụ trên                       |
-| Giỏ hàng, form fields, drawer/toast | Browser (client state)             | `cart.svelte.ts`, `ui.svelte.ts` |
+| Loại dữ liệu                        | Nơi sinh                                                    | Bằng chứng                       |
+| ----------------------------------- | ----------------------------------------------------------- | -------------------------------- |
+| Sản phẩm, danh mục, đơn hàng        | Server (`load({fetch})` → DummyJSON / action / `orders.ts`) | ví dụ trên                       |
+| Giỏ hàng, form fields, drawer/toast | Browser (client state)                                      | `cart.svelte.ts`, `ui.svelte.ts` |
 
 Hệ quả thiết kế đúng: `/checkout` khi SSR (giỏ hàng rỗng ở server) render nhánh "Giỏ hàng đang trống" (`checkout/+page.svelte:85`), sau hydration mới hiện form. `/order-success` sau khi có form action thì lấy đơn từ server nên SSR render đầy đủ.
 
@@ -174,7 +216,7 @@ Hệ quả thiết kế đúng: `/checkout` khi SSR (giỏ hàng rỗng ở serv
 
 ```ts
 export const actions = {
-	place: async ({ request }) => {
+	place: async ({ request, fetch }) => {
 		const form = await request.formData();
 		const field = (key: string) => String(form.get(key) ?? '').trim();
 		const fullname = field('fullname');
@@ -183,11 +225,20 @@ export const actions = {
 		if (!fullname || !phone || !email || !address) {
 			return fail(400, { error: 'Bạn hãy điền đầy đủ thông tin người nhận…' });
 		}
-		// Tính lại giá từ catalog server-only — KHÔNG tin số tiền client gửi lên
+		// Gọi API lấy catalog ngay trong action (server-side), tính lại giá — KHÔNG tin số tiền client gửi lên
+		let catalog: Product[] | null;
+		try {
+			catalog = await fetchProducts(fetch);
+		} catch {
+			catalog = null;
+		}
+		if (!catalog) {
+			return fail(503, { error: 'Không kiểm tra được kho hàng từ nguồn dữ liệu…' });
+		}
 		const items: Order['items'] = [];
 		let subtotal = 0;
 		for (const line of lines) {
-			const product = products.find((entry) => entry.id === line?.id);
+			const product = catalog.find((entry) => entry.id === line?.id);
 			if (!product) continue;
 			const quantity = Math.max(
 				1,
@@ -241,7 +292,7 @@ const handleEnhance: SubmitFunction = () => {
 
 ### 2.2 SSR (hoặc prerender) theo loại trang — CHỌN: SSR mặc định toàn app
 
-- Trang chủ & chi tiết sản phẩm: `load` server lấy catalog → SSR trả HTML đầy đủ. Phù hợp trang bán hàng (SEO/microdata).
+- Trang chủ & chi tiết sản phẩm: `load` server gọi API DummyJSON lấy catalog → SSR trả HTML đầy đủ. Phù hợp trang bán hàng (SEO/microdata).
 - `/order-success`: từng là trang chỉ hiển thị state client; đã chuyển thành trang SSR đọc lại đơn từ `orders.ts` theo `?order=` → **đúng tính chất "trang động"** (không thể prerender vì phụ thuộc query param + kho đơn trong bộ nhớ).
 - Không dùng `prerender` vì nội dung không tĩnh; không dùng `csr=false` vì trang vẫn cần tương tác (giỏ hàng, filter…).
 
@@ -254,20 +305,20 @@ const handleEnhance: SubmitFunction = () => {
 | Mục                            | Lý do bỏ qua                                                               |
 | ------------------------------ | -------------------------------------------------------------------------- |
 | Hooks (`handle`/`handleError`) | Ứng dụng không có auth/CSRF tùy chỉnh; SvelteKit đã làm sẵn phần cần thiết |
-| Streaming/deferred data        | Dữ liệu catalog rất nhỏ, không có nguồn chậm                               |
+| Streaming/deferred data        | Collection DummyJSON rất nhỏ, ổn định; không có nguồn chậm cần trì hoãn    |
 | Adapter cụ thể                 | Đồ án chưa nghiên cứu sâu deploy; giữ `adapter-auto`                       |
 
 ---
 
 ## 3. Minh chứng tối thiểu — bảng đối chiếu
 
-| Yêu cầu                                  | Bằng chứng                                                                                                                                                                |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ≥ 1 route dùng `load`                    | **3 route**: `/` , `/products/[id]`, `/order-success` (+ server action cũng đọc form)                                                                                     |
-| ≥ 1 tương tác đổi state                  | Tìm kiếm + lọc (`Catalog`), thêm/xoá giỏ (`cart`), đổi vận chuyển/coupon (`checkout`), slider ảnh, modal tracking                                                         |
-| Chỉ ra file/module server-only + tại sao | `src/lib/server/catalog.ts`, `orders.ts` — import duy nhất bởi `+page.server.ts`; chứa logic/dữ liệu không muốn lộ client, SvelteKit chặn import `$lib/server` vào client |
-| Form action có luồng thật                | Đặt hàng: form → `?/place` → validate + tính tiền server → `saveOrder` → `redirect 303` → `/order-success` SSR                                                            |
-| Store có luồng thật                      | `cart`: thêm → badge → drawer → checkout → clear; `ui`: drawer/toast                                                                                                      |
+| Yêu cầu                                  | Bằng chứng                                                                                                                                                                                                  |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ≥ 1 route dùng `load`                    | **3 route**: `/` , `/products/[id]`, `/order-success` (+ server action cũng đọc form)                                                                                                                       |
+| ≥ 1 tương tác đổi state                  | Tìm kiếm + lọc (`Catalog`), thêm/xoá giỏ (`cart`), đổi vận chuyển/coupon (`checkout`), slider ảnh, modal tracking                                                                                           |
+| Chỉ ra file/module server-only + tại sao | `src/lib/server/catalog.ts`, `orders.ts` — import duy nhất bởi `+page.server.ts`; chứa lời gọi API DummyJSON + logic tính tiền/kho đơn không muốn lộ client, SvelteKit chặn import `$lib/server` vào client |
+| Form action có luồng thật                | Đặt hàng: form → `?/place` → validate + tính tiền server → `saveOrder` → `redirect 303` → `/order-success` SSR                                                                                              |
+| Store có luồng thật                      | `cart`: thêm → badge → drawer → checkout → clear; `ui`: drawer/toast                                                                                                                                        |
 
 **Không phạm 3 điều "chưa đạt nếu...":** component dùng đầy đủ cơ chế SvelteKit (load/action/enhance/SSR); không có secret trong code client (grep xác nhận); phân biệt rõ dữ liệu load ở server (catalog, order) vs sinh ở browser (giỏ hàng, form).
 
@@ -316,7 +367,7 @@ POST thiếu trường / giỏ trống → {"type":"failure","status":400,"data"
 src/
 ├─ lib/
 │  ├─ server/
-│  │  ├─ catalog.ts          # server-only: dữ liệu sản phẩm (nguồn chân lý về giá)
+│  │  ├─ catalog.ts          # server-only: fetchProducts() gọi API DummyJSON (nguồn duy nhất)
 │  │  └─ orders.ts           # server-only: kho đơn hàng in-memory
 │  ├─ cart.svelte.ts         # store client runes: giỏ hàng
 │  ├─ ui.svelte.ts           # store client runes: drawer/toast
@@ -327,9 +378,9 @@ src/
 │     ├─ ProductDetail.svelte# state local + click slider
 │     └─ Header.svelte       # đọc cart.count (state dùng chung)
 └─ routes/
-   ├─ +page.server.ts                    # load: products + categories
+   ├─ +page.server.ts                    # async load({fetch}) → API DummyJSON: products + categories
    ├─ +page.svelte                       # <Catalog products={data.products} …/>
-   ├─ products/[id]/+page.server.ts      # load: params.id, error(404), related
+   ├─ products/[id]/+page.server.ts      # async load({fetch, params}): error(404), related
    ├─ cart/+page.svelte
    ├─ checkout/+page.server.ts           # action "place" (form action)
    ├─ checkout/+page.svelte              # <form action="?/place" use:enhance>

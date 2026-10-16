@@ -11,12 +11,12 @@ import {
 	SHIPPING_METHODS,
 	WARD_LABELS
 } from '$lib/checkout';
-import { products } from '$lib/server/catalog';
+import { fetchProducts } from '$lib/server/catalog';
 import { saveOrder } from '$lib/server/orders';
-import type { Order, OrderLine } from '$lib/types';
+import type { Order, OrderLine, Product } from '$lib/types';
 
 export const actions = {
-	place: async ({ request }) => {
+	place: async ({ request, fetch }) => {
 		const form = await request.formData();
 		const field = (key: string) => String(form.get(key) ?? '').trim();
 
@@ -45,10 +45,22 @@ export const actions = {
 			return fail(400, { error: 'Giỏ hàng đang trống. Vui lòng chọn vài món đồ mộc trước nhé.' });
 		}
 
+		let catalog: Product[] | null;
+		try {
+			catalog = await fetchProducts(fetch);
+		} catch {
+			catalog = null;
+		}
+		if (!catalog) {
+			return fail(503, {
+				error: 'Không kiểm tra được kho hàng từ nguồn dữ liệu. Vui lòng thử lại sau ít phút.'
+			});
+		}
+
 		const items: Order['items'] = [];
 		let subtotal = 0;
 		for (const line of lines) {
-			const product = products.find((entry) => entry.id === line?.id);
+			const product = catalog.find((entry) => entry.id === line?.id);
 			if (!product) continue;
 			const quantity = Math.max(
 				1,

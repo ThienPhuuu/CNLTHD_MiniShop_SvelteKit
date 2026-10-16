@@ -1,7 +1,8 @@
 import { error } from '@sveltejs/kit';
-import { products } from '$lib/server/catalog';
+import { fetchProducts } from '$lib/server/catalog';
 
-export function load({ params }) {
+export async function load({ fetch, params }) {
+	const products = await fetchProducts(fetch);
 	const product = products.find((entry) => entry.id === params.id);
 	if (!product) {
 		error(404, 'Không tìm thấy sản phẩm');

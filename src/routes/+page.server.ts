@@ -1,7 +1,8 @@
-import { products } from '$lib/server/catalog';
+import { fetchProducts } from '$lib/server/catalog';
 import type { Category } from '$lib/types';
 
-export function load() {
+export async function load({ fetch }) {
+	const products = await fetchProducts(fetch);
 	const categories: Category[] = [{ id: 'all', label: 'Tất cả' }];
 	for (const product of products) {
 		if (!categories.some((category) => category.id === product.categoryId)) {

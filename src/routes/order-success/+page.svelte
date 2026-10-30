@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fade } from 'svelte/transition';
 	import { resolve } from '$app/paths';
 	import { PAYMENT_LABELS } from '$lib/checkout';
 	import { formatVND } from '$lib/format';
@@ -8,16 +7,11 @@
 
 	const order = $derived(data.order);
 
-	let trackingOpen = $state(false);
-
 	function fmtDate(d: Date) {
 		return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 	}
 	function fmtTime(d: Date) {
 		return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-	}
-	function plusDays(base: Date, days: number) {
-		return new Date(base.getTime() + days * 86400000);
 	}
 </script>
 
@@ -25,15 +19,9 @@
 	<title>Thanh toán thành công — mộc.</title>
 	<meta
 		name="description"
-		content="Đơn hàng mộc. đã được xưởng tiếp nhận — theo dõi hành trình món đồ đến với tổ ấm của bạn."
+		content="Đơn hàng mộc. đã được xưởng tiếp nhận và xác nhận."
 	/>
 </svelte:head>
-
-<svelte:window
-	onkeydown={(e) => {
-		if (e.key === 'Escape') trackingOpen = false;
-	}}
-/>
 
 {#if order}
 	<div class="relative w-full max-w-[1320px] mx-auto px-6 lg:px-12 py-10 lg:py-16">
@@ -158,117 +146,6 @@
 			</div>
 		</section>
 
-		<!-- 2. Artisan Order Timeline -->
-		<section class="mt-14 max-w-4xl mx-auto">
-			<div class="flex items-center justify-between mb-8">
-				<div>
-					<span
-						class="font-label-sm text-label-sm uppercase tracking-widest text-primary font-semibold"
-						>Tiến độ xưởng</span
-					>
-					<h2 class="font-headline-sm text-headline-sm text-on-surface mt-1">
-						Hành trình món đồ nhỏ đến với tổ ấm
-					</h2>
-				</div>
-				<div
-					class="hidden sm:flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm"
-				>
-					<span class="material-symbols-outlined text-[16px] text-secondary">eco</span>
-					Đóng gói hoàn toàn không rác thải nhựa
-				</div>
-			</div>
-
-			<div
-				class="relative grid grid-cols-1 md:grid-cols-4 gap-6 p-6 bg-surface-container-low rounded-xl shadow-sm"
-			>
-				<div
-					class="hidden md:block absolute top-12 left-14 right-14 h-0.5 bg-surface-container-highest -z-0"
-				>
-					<div class="h-full bg-primary" style="width: 38%;"></div>
-				</div>
-
-				<div
-					class="relative flex md:flex-col items-start md:items-center gap-4 md:text-center z-10"
-				>
-					<div
-						class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-sm shrink-0"
-					>
-						<span class="material-symbols-outlined text-[22px]">check</span>
-					</div>
-					<div>
-						<div class="font-title-lg text-title-lg text-on-surface">Tiếp nhận đơn</div>
-						<div class="font-label-sm text-label-sm text-primary font-medium mt-0.5">
-							Đã hoàn tất ({fmtTime(order.createdAt)})
-						</div>
-						<p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">
-							Xác nhận thanh toán và thông tin giao nhận.
-						</p>
-					</div>
-				</div>
-
-				<div
-					class="relative flex md:flex-col items-start md:items-center gap-4 md:text-center z-10"
-				>
-					<div
-						class="w-12 h-12 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shadow-sm shrink-0 ring-4 ring-primary-fixed/40"
-					>
-						<span class="material-symbols-outlined text-[22px]">auto_fix</span>
-					</div>
-					<div>
-						<div class="font-title-lg text-title-lg text-primary font-semibold">
-							Đóng gói thủ công
-						</div>
-						<div class="font-label-sm text-label-sm text-primary-container font-medium mt-0.5">
-							Đang tỉ mẩn thực hiện
-						</div>
-						<p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">
-							Bọc giấy bồi mộc bản &amp; nắn nót thiệp cảm ơn gửi bạn.
-						</p>
-					</div>
-				</div>
-
-				<div
-					class="relative flex md:flex-col items-start md:items-center gap-4 md:text-center z-10 opacity-70"
-				>
-					<div
-						class="w-12 h-12 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0"
-					>
-						<span class="material-symbols-outlined text-[22px]">local_shipping</span>
-					</div>
-					<div>
-						<div class="font-title-lg text-title-lg text-on-surface">Trao bên vận chuyển</div>
-						<div class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">
-							Dự kiến {fmtDate(plusDays(order.createdAt, 1))}
-						</div>
-						<p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">
-							Đơn vị chuyên trách nhẹ tay &amp; an toàn.
-						</p>
-					</div>
-				</div>
-
-				<div
-					class="relative flex md:flex-col items-start md:items-center gap-4 md:text-center z-10 opacity-70"
-				>
-					<div
-						class="w-12 h-12 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0"
-					>
-						<span class="material-symbols-outlined text-[22px]">cottage</span>
-					</div>
-					<div>
-						<div class="font-title-lg text-title-lg text-on-surface">Chạm ngõ nhà bạn</div>
-						<div class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">
-							Dự kiến {plusDays(order.createdAt, 2).getDate()}-
-							{plusDays(order.createdAt, 3).getDate()}/
-							{String(plusDays(order.createdAt, 3).getMonth() + 1).padStart(2, '0')}
-						</div>
-						<p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">
-							Gói quà thơm hương thảo mộc an yên hiện diện.
-						</p>
-					</div>
-				</div>
-			</div>
-		</section>
-
 		<!-- 3. Editorial Receipt & Packaging Glance Split Bento -->
 		<section class="mt-14 max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 			<!-- Left: Receipt Card (7 cols) -->
@@ -324,9 +201,7 @@
 						<span class="text-on-surface font-medium">{formatVND(order.subtotal)}</span>
 					</div>
 					<div class="flex justify-between text-on-surface-variant">
-						<span
-							>Phí vận chuyển bọc lót {order.shipping === 'express' ? 'hỏa tốc' : 'nương niu'}</span
-						>
+						<span>Phí vận chuyển tiêu chuẩn</span>
 						<span class="text-on-surface font-medium">{formatVND(order.shippingFee)}</span>
 					</div>
 					<div class="flex justify-between text-on-surface-variant">
@@ -383,13 +258,6 @@
 			<div class="lg:col-span-5 flex flex-col gap-6">
 				<!-- Visual Storytelling Card -->
 				<div class="relative bg-surface-container rounded-xl overflow-hidden shadow-sm">
-					<div class="h-64 w-full overflow-hidden">
-						<img
-							class="w-full h-full object-cover"
-							alt="Quá trình bọc quà thủ công — giấy kraft nâu tái chế buộc bằng dây gai mộc mạc, kẹp nhánh hương thảo khô dưới nút thắt."
-							src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9i4bxV6GXrCmTEX-PnelLgJPF7nPJuwm8cOOzEGNSl4SNe5dRlrHYrUDBsap6El3ooi5KDhHvUprCMM1knd4cC-d_5V2PG4lAvcuAnDI22HN-AROCm9n50rMUVWumCtmS1cJjMczN22AAD0qRtfkHJnmTMnISSHcOnSiP5zOf4wwCC95q5re4mWVtlYLX9ZMG9FuG7-OOsGJd34oIpZ69FWnn9CxulAXLGZXq83rMxfCMi1naHQXE"
-						/>
-					</div>
 					<div class="p-6">
 						<div
 							class="inline-block px-2.5 py-0.5 bg-secondary-container text-on-secondary-container rounded font-label-sm text-label-sm uppercase tracking-wider mb-2"
@@ -501,14 +369,6 @@
 				<span>Tiếp tục dạo xem cửa hàng</span>
 				<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
 			</a>
-			<button
-				class="w-full sm:w-auto px-6 py-3.5 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-label-lg text-label-lg transition-all flex items-center justify-center gap-2"
-				type="button"
-				onclick={() => (trackingOpen = true)}
-			>
-				<span class="material-symbols-outlined text-[18px]">travel_explore</span>
-				<span>Theo dõi vận chuyển</span>
-			</button>
 			<a
 				class="w-full sm:w-auto py-3.5 text-on-surface-variant hover:text-primary font-label-lg text-label-lg underline decoration-outline-variant underline-offset-4 transition-colors"
 				href={resolve('/#triet-ly')}
@@ -569,63 +429,6 @@
 			</div>
 		</section>
 
-		{#if trackingOpen}
-			<div
-				class="fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4"
-				transition:fade={{ duration: 150 }}
-			>
-				<button
-					type="button"
-					aria-label="Đóng lộ trình vận chuyển"
-					class="absolute inset-0 w-full h-full cursor-default"
-					onclick={() => (trackingOpen = false)}
-				></button>
-				<div
-					class="bg-surface rounded-xl max-w-md w-full p-6 shadow-xl relative"
-					role="dialog"
-					aria-modal="true"
-					aria-label="Kiểm tra lộ trình"
-					transition:fade={{ duration: 150 }}
-				>
-					<button
-						class="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface"
-						type="button"
-						onclick={() => (trackingOpen = false)}
-						aria-label="Đóng cửa sổ"
-					>
-						<span class="material-symbols-outlined text-[20px]">close</span>
-					</button>
-					<span
-						class="font-label-sm text-label-sm uppercase tracking-widest text-primary font-semibold"
-						>Kiểm tra lộ trình</span
-					>
-					<h3 class="font-headline-sm text-headline-sm text-on-surface mt-1 break-all">
-						Kiện hàng #{order.id}
-					</h3>
-					<p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
-						Đơn hàng đang ở xưởng Bát Tràng, đang đợi thợ bọc sáp niêm phong và đóng hộp gỗ tái
-						sinh.
-					</p>
-					<div
-						class="mt-4 p-3 bg-surface-container rounded-lg font-label-sm text-label-sm text-on-surface-variant flex items-center justify-between"
-					>
-						<span>Mã vận đơn liên kết:</span>
-						<span class="font-mono text-on-surface font-semibold break-all text-right"
-							>VNPOST-{order.id.slice(4)}-MOC</span
-						>
-					</div>
-					<div class="mt-6 flex justify-end">
-						<button
-							class="px-4 py-2 bg-primary text-on-primary rounded font-label-sm text-label-sm uppercase tracking-wider"
-							type="button"
-							onclick={() => (trackingOpen = false)}
-						>
-							Đã hiểu
-						</button>
-					</div>
-				</div>
-			</div>
-		{/if}
 	</div>
 {:else}
 	<div class="max-w-[1320px] mx-auto px-6 lg:px-12 w-full py-8 lg:py-12">

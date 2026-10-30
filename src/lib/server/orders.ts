@@ -19,7 +19,11 @@ export function createOrderId(): string {
 }
 
 export function saveOrder(order: Order): void {
-	orders.set(order.id, order);
+    if (orders.has(order.id)) {
+        throw new Error(`Mã đơn hàng ${order.id} đã tồn tại.`);
+    }
+
+    orders.set(order.id, order);
 }
 
 export function getOrder(id: string): Order | null {

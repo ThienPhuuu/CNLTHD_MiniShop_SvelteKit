@@ -20,8 +20,7 @@
 	let address = $state('');
 	let note = $state('');
 
-	let shipping = $state('standard');
-	let payment = $state('vietqr');
+	const shipping = 'standard';
 	let couponCode = $state('MOCBANMOI');
 	let couponApplied = $state(false);
 	let couponError = $state('');
@@ -290,25 +289,6 @@
 								/>
 							</div>
 						</div>
-						<label
-							class="flex items-start gap-3 p-3.5 rounded-lg bg-surface-container border border-outline-variant/40 cursor-pointer hover:bg-surface-container-high transition-colors"
-						>
-							<input
-								class="mt-0.5 w-4 h-4 rounded text-primary focus:ring-0 focus:ring-offset-0 border-outline-variant accent-primary"
-								type="checkbox"
-								checked
-							/>
-							<div class="flex flex-col gap-0.5">
-								<span class="font-label-lg text-label-lg text-on-surface flex items-center gap-1.5">
-									<span class="material-symbols-outlined text-[18px] text-primary">spa</span>
-									Giao hàng cẩn trọng cho đồ gốm dễ vỡ
-								</span>
-								<span class="font-body-sm text-body-sm text-on-surface-variant"
-									>Mỗi kiện đồ gốm và gỗ mộc đều được dán tem cảnh báo thủ công, bọc 3 lớp đệm chống
-									chấn động.</span
-								>
-							</div>
-						</label>
 					</section>
 
 					<!-- 03. Shipping -->
@@ -326,69 +306,27 @@
 								>Đóng gói bền vững</span
 							>
 						</div>
-						<div class="grid grid-cols-1 gap-3.5">
-							<label
-								class="relative flex items-center justify-between p-4 rounded-lg bg-surface-container-lowest cursor-pointer {shipping ===
-								'standard'
-									? 'border-2 border-primary/90 shadow-sm'
-									: 'border border-outline-variant/40 hover:border-outline-variant transition-colors'}"
-							>
-								<div class="flex items-center gap-3.5">
-									<input
-										class="w-4 h-4 text-primary accent-primary"
-										name="shipping_method"
-										type="radio"
-										value="standard"
-										bind:group={shipping}
-									/>
-									<div class="flex flex-col">
-										<span
-											class="font-label-lg text-label-lg text-on-surface font-semibold flex items-center gap-2"
-										>
-											Giao tiêu chuẩn nương niu
-											<span
-												class="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-secondary-container text-on-secondary-container rounded font-bold"
-												>Khuyên dùng</span
-											>
-										</span>
-										<span class="font-body-sm text-body-sm text-on-surface-variant">
-											Thời gian 2 – 3 ngày. Bao bọc bằng giấy tổ ong tái chế &amp; rơm tự nhiên từ
-											làng mộc.
-										</span>
-									</div>
-								</div>
-								<span class="font-label-lg text-label-lg text-on-surface font-semibold shrink-0"
-									>{formatVND(SHIPPING_FEE.standard)}</span
+						<input type="hidden" name="shipping_method" value="standard" />
+						<div
+							class="flex items-center justify-between p-4 rounded-lg bg-surface-container-lowest border-2 border-primary/90 shadow-sm"
+						>
+							<div class="flex items-center gap-3.5">
+								<span
+									class="material-symbols-outlined text-primary text-[24px]"
+									aria-hidden="true">local_shipping</span
 								>
-							</label>
-							<label
-								class="relative flex items-center justify-between p-4 rounded-lg bg-surface-container-lowest cursor-pointer {shipping ===
-								'express'
-									? 'border-2 border-primary/90 shadow-sm'
-									: 'border border-outline-variant/40 hover:border-outline-variant transition-colors'}"
-							>
-								<div class="flex items-center gap-3.5">
-									<input
-										class="w-4 h-4 text-primary accent-primary"
-										name="shipping_method"
-										type="radio"
-										value="express"
-										bind:group={shipping}
-									/>
-									<div class="flex flex-col">
-										<span class="font-label-lg text-label-lg text-on-surface font-semibold"
-											>Giao hỏa tốc hẹn giờ (Nội thành)</span
-										>
-										<span class="font-body-sm text-body-sm text-on-surface-variant">
-											Giao trong 4 giờ hoặc theo khung giờ hẹn. Xe riêng chở trực tiếp tránh xóc
-											nảy.
-										</span>
-									</div>
+								<div class="flex flex-col">
+									<span class="font-label-lg text-label-lg text-on-surface font-semibold">
+										Giao tiêu chuẩn
+									</span>
+									<span class="font-body-sm text-body-sm text-on-surface-variant">
+										Thời gian 2 – 3 ngày.
+									</span>
 								</div>
-								<span class="font-label-lg text-label-lg text-on-surface font-semibold shrink-0"
-									>{formatVND(SHIPPING_FEE.express)}</span
-								>
-							</label>
+							</div>
+							<span class="font-label-lg text-label-lg text-on-surface font-semibold shrink-0"
+								>{formatVND(SHIPPING_FEE.standard)}</span
+							>
 						</div>
 					</section>
 
@@ -403,135 +341,25 @@
 								<span class="font-headline-sm text-headline-sm text-primary">04.</span>
 								<h2 class="font-title-lg text-title-lg text-on-surface">Hình thức thanh toán</h2>
 							</div>
-							<div class="flex items-center gap-1.5 text-secondary">
-								<span class="material-symbols-outlined text-[16px]">lock</span>
-								<span class="font-label-sm text-label-sm">Bảo mật SSL 256-bit</span>
-							</div>
 						</div>
-						<div class="flex flex-col gap-3.5" id="payment-options">
-							<!-- VietQR (Featured) -->
-							<div
-								class="flex flex-col rounded-lg overflow-hidden bg-surface-container-lowest {payment ===
-								'vietqr'
-									? 'border-2 border-primary'
-									: 'border border-outline-variant/40 hover:border-outline-variant transition-colors'}"
-							>
-								<label class="flex items-center justify-between p-4 cursor-pointer">
-									<div class="flex items-center gap-3.5">
-										<input
-											class="w-4 h-4 text-primary accent-primary"
-											name="payment_method"
-											type="radio"
-											value="vietqr"
-											bind:group={payment}
-										/>
-										<div>
-											<span
-												class="font-label-lg text-label-lg text-on-surface font-semibold flex items-center gap-2"
-											>
-												Chuyển khoản VietQR tiện lợi
-												<span
-													class="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-primary-fixed text-on-primary-fixed rounded font-semibold"
-													>Tự động 30s</span
-												>
-											</span>
-											<span class="font-body-sm text-body-sm text-on-surface-variant">
-												Quét mã nhanh qua mọi App Ngân hàng &amp; Momo. Tặng kèm postcard gỗ xưởng
-												mộc.
-											</span>
-										</div>
-									</div>
-									<span class="material-symbols-outlined text-primary text-[24px]">qr_code_2</span>
-								</label>
-								{#if payment === 'vietqr'}
-									<div
-										class="px-5 py-4 bg-surface-container border-t border-surface-container-highest flex items-center justify-between gap-4"
-									>
-										<div class="flex items-center gap-3">
-											<div
-												class="w-10 h-10 rounded bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center font-bold text-xs text-primary"
-											>
-												QR
-											</div>
-											<div class="flex flex-col">
-												<span class="font-label-sm text-label-sm text-on-surface font-semibold"
-													>Mã QR tạo riêng sau khi bấm Đặt hàng</span
-												>
-												<span class="font-body-sm text-[12px] text-on-surface-variant"
-													>Hệ thống khớp nội dung chuyển khoản tự động không cần gửi ảnh biên lai.</span
-												>
-											</div>
-										</div>
-										<span
-											class="font-label-sm text-label-sm text-secondary font-semibold whitespace-nowrap"
-											>Miễn phí giao dịch</span
-										>
-									</div>
-								{/if}
-							</div>
-							<!-- Card -->
-							<label
-								class="relative flex items-center justify-between p-4 rounded-lg bg-surface-container-lowest cursor-pointer {payment ===
-								'card'
-									? 'border-2 border-primary shadow-sm'
-									: 'border border-outline-variant/40 hover:border-outline-variant transition-colors'}"
-							>
-								<div class="flex items-center gap-3.5">
-									<input
-										class="w-4 h-4 text-primary accent-primary"
-										name="payment_method"
-										type="radio"
-										value="card"
-										bind:group={payment}
-									/>
-									<div class="flex flex-col">
-										<span class="font-label-lg text-label-lg text-on-surface font-semibold"
-											>Thẻ quốc tế (Visa, Mastercard, JCB)</span
-										>
-										<span class="font-body-sm text-body-sm text-on-surface-variant"
-											>Xử lý qua cổng thanh toán bảo mật liên ngân hàng.</span
-										>
-									</div>
-								</div>
-								<div class="flex items-center gap-1.5 opacity-80">
-									<span
-										class="px-1.5 py-0.5 rounded text-[11px] font-bold bg-surface-container-high text-on-surface"
-										>VISA</span
-									>
-									<span
-										class="px-1.5 py-0.5 rounded text-[11px] font-bold bg-surface-container-high text-on-surface"
-										>MC</span
-									>
-								</div>
-							</label>
-							<!-- COD -->
-							<label
-								class="relative flex items-center justify-between p-4 rounded-lg bg-surface-container-lowest cursor-pointer {payment ===
-								'cod'
-									? 'border-2 border-primary shadow-sm'
-									: 'border border-outline-variant/40 hover:border-outline-variant transition-colors'}"
-							>
-								<div class="flex items-center gap-3.5">
-									<input
-										class="w-4 h-4 text-primary accent-primary"
-										name="payment_method"
-										type="radio"
-										value="cod"
-										bind:group={payment}
-									/>
-									<div class="flex flex-col">
-										<span class="font-label-lg text-label-lg text-on-surface font-semibold"
-											>Thanh toán khi nhận hàng (COD)</span
-										>
-										<span class="font-body-sm text-body-sm text-on-surface-variant"
-											>Đồng kiểm hàng gốm, gỗ trước sự chứng kiến của người giao thư thái.</span
-										>
-									</div>
-								</div>
-								<span class="material-symbols-outlined text-on-surface-variant text-[22px]"
-									>local_shipping</span
+						<input type="hidden" name="payment_method" value="cod" />
+						<div
+							class="flex items-center justify-between p-4 rounded-lg bg-surface-container-lowest border-2 border-primary shadow-sm"
+						>
+							<div class="flex items-center gap-3.5">
+								<span
+									class="material-symbols-outlined text-primary text-[24px]"
+									aria-hidden="true">local_shipping</span
 								>
-							</label>
+								<div class="flex flex-col">
+									<span class="font-label-lg text-label-lg text-on-surface font-semibold"
+										>Thanh toán khi nhận hàng (COD)</span
+									>
+									<span class="font-body-sm text-body-sm text-on-surface-variant"
+										>Đồng kiểm hàng gốm, gỗ trước sự chứng kiến của người giao thư thái.</span
+									>
+								</div>
+							</div>
 						</div>
 					</section>
 
@@ -580,7 +408,7 @@
 						<button
 							type="submit"
 							disabled={orderState !== 'idle'}
-							class="w-full py-4 px-8 rounded font-label-lg text-label-lg tracking-wider uppercase transition-all duration-200 shadow-md flex items-center justify-center gap-3 group"
+							class="w-full py-5 px-8 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg tracking-wider uppercase transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 group ring-2 ring-primary/30 ring-offset-2 ring-offset-surface"
 						>
 							{#if orderState === 'idle'}
 								<span>Xác nhận đặt hàng &amp; Thanh toán — {formatVND(total)}</span>
@@ -722,7 +550,7 @@
 							<span class="text-on-surface font-medium">{formatVND(subtotal)}</span>
 						</div>
 						<div class="flex justify-between">
-							<span>Phí vận chuyển {shipping === 'express' ? 'hỏa tốc hẹn giờ' : 'nương niu'}</span>
+							<span>Phí vận chuyển tiêu chuẩn</span>
 							<span class="text-on-surface font-medium">{formatVND(shippingFee)}</span>
 						</div>
 						<div class="flex justify-between">

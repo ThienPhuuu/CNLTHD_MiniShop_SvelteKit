@@ -94,7 +94,7 @@
 			</h1>
 			<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed max-w-2xl mb-8">
 				Đơn hàng
-				<span class="font-title-lg text-primary font-semibold">#{order.id}</span>
+				<span class="font-title-lg text-primary font-semibold break-all">#{order.id}</span>
 				đã được xưởng tiếp nhận. Chúng tôi đang cẩn thận chuẩn bị từng món đồ, bọc lót giấy bồi thủ công
 				và sẽ sớm gói trọn hơi ấm gửi đến bạn.
 			</p>
@@ -115,7 +115,7 @@
 						>
 							Mã đơn hàng
 						</div>
-						<div class="font-title-lg text-title-lg text-on-surface">#{order.id}</div>
+						<div class="font-title-lg text-title-lg text-on-surface break-all">#{order.id}</div>
 					</div>
 				</div>
 				<div class="flex items-center gap-3">
@@ -599,7 +599,7 @@
 						class="font-label-sm text-label-sm uppercase tracking-widest text-primary font-semibold"
 						>Kiểm tra lộ trình</span
 					>
-					<h3 class="font-headline-sm text-headline-sm text-on-surface mt-1">
+					<h3 class="font-headline-sm text-headline-sm text-on-surface mt-1 break-all">
 						Kiện hàng #{order.id}
 					</h3>
 					<p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
@@ -610,7 +610,7 @@
 						class="mt-4 p-3 bg-surface-container rounded-lg font-label-sm text-label-sm text-on-surface-variant flex items-center justify-between"
 					>
 						<span>Mã vận đơn liên kết:</span>
-						<span class="font-mono text-on-surface font-semibold"
+						<span class="font-mono text-on-surface font-semibold break-all text-right"
 							>VNPOST-{order.id.slice(4)}-MOC</span
 						>
 					</div>

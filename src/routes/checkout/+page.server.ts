@@ -12,7 +12,7 @@ import {
 	WARD_LABELS
 } from '$lib/checkout';
 import { fetchProducts } from '$lib/server/catalog';
-import { saveOrder } from '$lib/server/orders';
+import { createOrderId, saveOrder } from '$lib/server/orders';
 import type { Order, OrderLine, Product } from '$lib/types';
 
 export const actions = {
@@ -91,7 +91,7 @@ export const actions = {
 		const total = subtotal + shippingFee + GIFT_FEE - discount;
 
 		const order: Order = {
-			id: `MOC-${Math.floor(1000 + Math.random() * 9000)}`,
+			id: createOrderId(),
 			items,
 			subtotal,
 			shippingFee,

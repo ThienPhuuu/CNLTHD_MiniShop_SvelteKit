@@ -208,12 +208,6 @@
 						<span>Giấy bồi &amp; Hộp quà mộc bản kèm thiệp</span>
 						<span class="text-on-surface font-medium">{formatVND(order.giftFee)}</span>
 					</div>
-					{#if order.discount > 0}
-						<div class="flex justify-between text-primary font-medium">
-							<span>Ưu đãi nghệ nhân (MOCBANMOI)</span>
-							<span>-{formatVND(order.discount)}</span>
-						</div>
-					{/if}
 					<div class="flex justify-between items-baseline pt-4 mt-2 font-title-lg text-title-lg">
 						<span class="text-on-surface font-medium">Tổng số tiền thanh toán</span>
 						<div class="text-right">

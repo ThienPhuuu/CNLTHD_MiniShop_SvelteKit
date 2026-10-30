@@ -1,9 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import {
 	CITY_LABELS,
-	COUPON_CODE,
-	COUPON_MIN,
-	COUPON_VALUE,
 	DISTRICT_LABELS,
 	GIFT_FEE,
 	PAYMENT_METHODS,
@@ -96,12 +93,7 @@ export const actions = {
 			: 'vietqr';
 
 		const shippingFee = SHIPPING_FEE[shipping];
-		const couponApplied = String(form.get('coupon_applied')) === 'true';
-		const discount =
-			couponApplied && field('coupon').toUpperCase() === COUPON_CODE && subtotal >= COUPON_MIN
-				? COUPON_VALUE
-				: 0;
-		const total = subtotal + shippingFee + GIFT_FEE - discount;
+		const total = subtotal + shippingFee + GIFT_FEE;
 
 		const order: Order = {
 			id: createOrderId(),
@@ -109,7 +101,6 @@ export const actions = {
 			subtotal,
 			shippingFee,
 			giftFee: GIFT_FEE,
-			discount,
 			total,
 			shipping,
 			payment,

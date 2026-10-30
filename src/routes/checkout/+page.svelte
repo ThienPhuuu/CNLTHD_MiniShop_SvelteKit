@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { cart } from '$lib/cart.svelte';
-	import { COUPON_CODE, COUPON_MIN, COUPON_VALUE, GIFT_FEE, SHIPPING_FEE } from '$lib/checkout';
+	import { GIFT_FEE, SHIPPING_FEE } from '$lib/checkout';
 	import { formatVND } from '$lib/format';
 
 	const inputClass =
@@ -21,37 +21,16 @@
 	let note = $state('');
 
 	const shipping = 'standard';
-	let couponCode = $state('MOCBANMOI');
-	let couponApplied = $state(false);
-	let couponError = $state('');
 	let orderState = $state<'idle' | 'loading'>('idle');
 	let submitError = $state('');
 
 	let subtotal = $derived(cart.total);
 	let shippingFee = $derived(SHIPPING_FEE[shipping]);
-	let couponValid = $derived(couponApplied && subtotal >= COUPON_MIN);
-	let discount = $derived(couponValid ? COUPON_VALUE : 0);
-	let total = $derived(subtotal + shippingFee + GIFT_FEE - discount);
+	let total = $derived(subtotal + shippingFee + GIFT_FEE);
 
 	let cartLinesJSON = $derived(
 		JSON.stringify(cart.items.map((item) => ({ id: item.id, quantity: item.quantity })))
 	);
-	let couponAppliedFlag = $derived(couponValid ? 'true' : '');
-
-	function applyCoupon() {
-		if (couponCode.trim().toUpperCase() !== COUPON_CODE) {
-			couponApplied = false;
-			couponError = 'Mã ưu đãi không tồn tại. Thử mã MOCBANMOI nhé.';
-			return;
-		}
-		if (subtotal < COUPON_MIN) {
-			couponApplied = false;
-			couponError = `Đơn hàng tối thiểu ${formatVND(COUPON_MIN)} mới dùng mã này.`;
-			return;
-		}
-		couponError = '';
-		couponApplied = true;
-	}
 
 	const handleEnhance: SubmitFunction = () => {
 		orderState = 'loading';
@@ -157,8 +136,6 @@
 					use:enhance={handleEnhance}
 				>
 					<input type="hidden" name="items" value={cartLinesJSON} />
-					<input type="hidden" name="coupon" value={couponCode} />
-					<input type="hidden" name="coupon_applied" value={couponAppliedFlag} />
 					<!-- 01. Contact -->
 					<section
 						class="bg-surface-container-low rounded-xl p-6 sm:p-8 flex flex-col gap-6 shadow-sm"
@@ -501,46 +478,6 @@
 						</div>
 					</div>
 
-					<!-- Coupon -->
-					<div class="pt-2 border-t border-surface-container-highest flex flex-col gap-2">
-						<label
-							class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold"
-							for="coupon-input">Mã ưu đãi nghệ nhân</label
-						>
-						<div class="flex items-center gap-2">
-							<input
-								class="flex-1 bg-surface-container-lowest border border-outline-variant/60 rounded px-3 py-2 font-label-sm text-label-sm tracking-widest text-on-surface uppercase focus:outline-none focus:border-primary transition-colors"
-								id="coupon-input"
-								type="text"
-								placeholder="MOCBANMOI"
-								bind:value={couponCode}
-							/>
-							<button
-								type="button"
-								onclick={applyCoupon}
-								disabled={couponValid}
-								class="px-3.5 py-2 rounded bg-surface-container-highest hover:bg-secondary-container text-on-surface font-label-sm text-label-sm font-semibold transition-colors shrink-0 disabled:opacity-60 disabled:cursor-default"
-							>
-								{couponValid ? 'Đã áp dụng' : 'Áp dụng'}
-							</button>
-						</div>
-						{#if couponValid}
-							<div class="flex items-center gap-1.5 text-secondary text-[12px]">
-								<span class="material-symbols-outlined text-[14px]">check_circle</span>
-								<span
-									>Đã trừ {formatVND(COUPON_VALUE)} cho đơn đầu tiên từ {formatVND(
-										COUPON_MIN
-									)}</span
-								>
-							</div>
-						{:else if couponError}
-							<div class="flex items-center gap-1.5 text-error text-[12px]">
-								<span class="material-symbols-outlined text-[14px]">error</span>
-								<span>{couponError}</span>
-							</div>
-						{/if}
-					</div>
-
 					<!-- Price Calculation -->
 					<div
 						class="pt-2 border-t border-surface-container-highest flex flex-col gap-2 font-body-sm text-body-sm text-on-surface-variant"
@@ -557,12 +494,6 @@
 							<span>Phí gói quà &amp; thiệp hoa khô</span>
 							<span class="text-on-surface font-medium">{formatVND(GIFT_FEE)}</span>
 						</div>
-						{#if discount > 0}
-							<div class="flex justify-between text-primary font-medium">
-								<span>Ưu đãi ({COUPON_CODE})</span>
-								<span>-{formatVND(discount)}</span>
-							</div>
-						{/if}
 						<div
 							class="pt-4 border-t border-surface-container-highest flex items-baseline justify-between"
 						>

@@ -42,7 +42,6 @@ export type Order = {
 	subtotal: number;
 	shippingFee: number;
 	giftFee: number;
-	discount: number;
 	total: number;
 	shipping: 'standard' | 'express';
 	payment: 'vietqr' | 'card' | 'cod';

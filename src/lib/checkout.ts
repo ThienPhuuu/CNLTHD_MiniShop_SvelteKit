@@ -2,10 +2,6 @@ export const SHIPPING_FEE: Record<string, number> = { standard: 30000, express: 
 
 export const GIFT_FEE = 35000;
 
-export const COUPON_CODE = 'MOCBANMOI';
-export const COUPON_VALUE = 50000;
-export const COUPON_MIN = 1000000;
-
 export const SHIPPING_METHODS = ['standard', 'express'] as const;
 export const PAYMENT_METHODS = ['vietqr', 'card', 'cod'] as const;
 

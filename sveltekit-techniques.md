@@ -178,7 +178,7 @@ export const load: PageServerLoad = ({ url }) => {
 };
 ```
 
-Trang `/order-success?order=MOC-XXXX` giờ render đơn **ngay trên server** (biên lai, timeline, thông tin nhận hàng) — không phụ thuộc state client.
+Trang `/order-success?order=MOC-<UUID>` giờ render đơn **ngay trên server** (biên lai, timeline, thông tin nhận hàng) — không phụ thuộc state client.
 
 Chi tiết page chi tiết sản phẩm còn dùng `{#key data.product.id}` để reset state local (ảnh, số lượng) khi chuyển giữa các sản phẩm liên quan.
 
@@ -248,6 +248,7 @@ export const actions = {
 			subtotal += product.price * quantity;
 		}
 		// ...tính shippingFee, discount theo mã, total...
+		// id: createOrderId() sinh MOC-<UUID> và kiểm tra trùng trước khi gán
 		saveOrder(order);
 		redirect(303, `/order-success?order=${order.id}`);
 	}
@@ -351,8 +352,8 @@ npm run build    # build production OK
 Và smoke test luồng form action bằng HTTP (không cần trình duyệt):
 
 ```text
-POST /checkout?/place  →  {"type":"redirect","status":303,"location":"/order-success?order=MOC-XXXX"}
-GET  /order-success?order=MOC-XXXX  →  200 (SSR) chứa: #MOC-XXXX, tên người nhận,
+POST /checkout?/place  →  {"type":"redirect","status":303,"location":"/order-success?order=MOC-<UUID>"}
+GET  /order-success?order=MOC-<UUID>  →  200 (SSR) chứa: #MOC-<UUID>, tên người nhận,
      480.000 / 55.000 / 35.000 / 570.000đ, "VietQR"
 POST thiếu trường / giỏ trống → {"type":"failure","status":400,"data":{"error": …}, …}
 ```

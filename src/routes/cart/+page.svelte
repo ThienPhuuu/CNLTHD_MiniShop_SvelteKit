@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { cart } from '$lib/cart.svelte';
+	import { ui } from '$lib/ui.svelte';
 	import { formatVND } from '$lib/format';
 
 	function checkout() {
@@ -59,7 +60,10 @@
 								<button
 									type="button"
 									aria-label="Tăng số lượng"
-									onclick={() => cart.add(item)}
+									onclick={() => {
+										const error = cart.add(item);
+										if (error) ui.showError(error);
+									}}
 									class="px-3 py-1.5 hover:bg-surface-container transition-colors">+</button
 								>
 							</div>

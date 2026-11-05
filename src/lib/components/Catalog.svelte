@@ -19,7 +19,11 @@
 	);
 
 	function addToCart(product: Product) {
-		cart.add(product);
+		const error = cart.add(product);
+		if (error) {
+			ui.showError(error);
+			return;
+		}
 		ui.showToast(`Đã thêm "${product.name}" vào túi hàng`);
 		ui.openCart();
 	}

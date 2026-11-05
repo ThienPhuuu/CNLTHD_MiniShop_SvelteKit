@@ -1,9 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import {
 	CITY_LABELS,
-	COUPON_CODE,
-	COUPON_MIN,
-	COUPON_VALUE,
 	DISTRICT_LABELS,
 	GIFT_FEE,
 	PAYMENT_METHODS,
@@ -12,7 +9,7 @@ import {
 	WARD_LABELS
 } from '$lib/checkout';
 import { fetchProducts } from '$lib/server/catalog';
-import { saveOrder } from '$lib/server/orders';
+import { createOrderId, saveOrder } from '$lib/server/orders';
 import type { Order, OrderLine, Product } from '$lib/types';
 
 export const actions = {
@@ -57,15 +54,28 @@ export const actions = {
 			});
 		}
 
+		const quantities = new Map<string, number>();
+		for (const line of lines) {
+			const quantity = Math.floor(Number(line?.quantity));
+			if (!line?.id || !Number.isFinite(quantity) || quantity < 1) {
+				return fail(400, { error: 'Số lượng sản phẩm không hợp lệ.' });
+			}
+			quantities.set(line.id, (quantities.get(line.id) ?? 0) + quantity);
+		}
+
 		const items: Order['items'] = [];
 		let subtotal = 0;
-		for (const line of lines) {
-			const product = catalog.find((entry) => entry.id === line?.id);
+		for (const [id, quantity] of quantities) {
+			const product = catalog.find((entry) => entry.id === id);
 			if (!product) continue;
-			const quantity = Math.max(
-				1,
-				Math.min(Math.floor(Number(line?.quantity)) || 1, product.stock)
-			);
+			if (product.stock === 0) {
+				return fail(400, { error: `Sản phẩm "${product.name}" tạm hết hàng.` });
+			}
+			if (quantity > product.stock) {
+				return fail(400, {
+					error: `Số lượng "${product.name}" vượt quá tồn kho hiện tại.`
+				});
+			}
 			items.push({ ...product, quantity });
 			subtotal += product.price * quantity;
 		}
@@ -83,20 +93,14 @@ export const actions = {
 			: 'vietqr';
 
 		const shippingFee = SHIPPING_FEE[shipping];
-		const couponApplied = String(form.get('coupon_applied')) === 'true';
-		const discount =
-			couponApplied && field('coupon').toUpperCase() === COUPON_CODE && subtotal >= COUPON_MIN
-				? COUPON_VALUE
-				: 0;
-		const total = subtotal + shippingFee + GIFT_FEE - discount;
+		const total = subtotal + shippingFee + GIFT_FEE;
 
 		const order: Order = {
-			id: `MOC-${Math.floor(1000 + Math.random() * 9000)}`,
+			id: createOrderId(),
 			items,
 			subtotal,
 			shippingFee,
 			giftFee: GIFT_FEE,
-			discount,
 			total,
 			shipping,
 			payment,

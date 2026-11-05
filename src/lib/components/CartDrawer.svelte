@@ -84,7 +84,10 @@
 									<button
 										type="button"
 										aria-label="Tăng số lượng"
-										onclick={() => cart.add(item)}
+										onclick={() => {
+											const error = cart.add(item);
+											if (error) ui.showError(error);
+										}}
 										class="w-7 h-7 flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors rounded-r"
 									>
 										<span class="material-symbols-outlined text-[14px]">add</span>

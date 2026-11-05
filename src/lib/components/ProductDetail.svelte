@@ -64,12 +64,20 @@
 	let wishlisted = $state(false);
 
 	function addToCart() {
-		cart.add(product, quantity);
+		const error = cart.add(product, quantity);
+		if (error) {
+			ui.showError(error);
+			return;
+		}
 		ui.showToast(`Đã thêm ${quantity}× ${product.name} vào giỏ hàng`);
 	}
 
 	function buyNow() {
-		cart.add(product, quantity);
+		const error = cart.add(product, quantity);
+		if (error) {
+			ui.showError(error);
+			return;
+		}
 		ui.showToast(`Đã thêm ${quantity}× ${product.name} vào giỏ hàng`);
 		goto(resolve('/cart'));
 	}
@@ -512,7 +520,11 @@
 						<button
 							type="button"
 							onclick={() => {
-								cart.add(item);
+								const error = cart.add(item);
+								if (error) {
+									ui.showError(error);
+									return;
+								}
 								ui.showToast(`Đã thêm "${item.name}" vào giỏ hàng`);
 							}}
 							class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-container text-on-surface font-label-sm text-label-sm shadow-sm transition-colors flex items-center gap-1"
